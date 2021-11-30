@@ -1,5 +1,5 @@
 from utils import test_model
-
+from optimizers import AdamOptimizer
 
 def test_neuron_number(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose=True):
     results = []
@@ -24,6 +24,7 @@ def test_eta(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose=True):
     for eta, (accuracy, epochs, time) in zip(etas, results):
         print(f"eta={eta} | accuracy={accuracy} | epochs={epochs} | time={time}")
 
+
 def test_eta_decay(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose=True):
     ETA = 0.05
     eta_decays = [0.9, 0.95, 0.99, 0.999, 1]
@@ -33,7 +34,6 @@ def test_eta_decay(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose=T
         results.append(test_model(train_X, train_y, valid_X, valid_y, test_X, test_y, eta=ETA, eta_decay=decay, verbose=verbose))
     for decay, (accuracy, epochs, time) in zip(eta_decays, results):
         print(f"eta decay={decay} | accuracy={accuracy} | epochs={epochs} | time={time}")
-
 
 
 def test_batch_size(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose=True):
@@ -70,3 +70,13 @@ def test_activations(train_X, train_y, valid_X, valid_y, test_X, test_y, verbose
 
     for act, (accuracy, epochs, time) in zip(activations, results):
         print(f"activation={act[0]} | accuracy={accuracy} | epochs={epochs} | time={time}")
+
+
+def test_optimizer(train_X, train_y, valid_X, valid_y, test_X, test_y, opt, verbose=True):
+    print(test_model(train_X, train_y, valid_X, valid_y, test_X, test_y, opt=opt,
+                     experiments_n=10, verbose=verbose))
+
+
+def test_initializer(train_X, train_y, valid_X, valid_y, test_X, test_y, init, verbose=True):
+    print(test_model(train_X, train_y, valid_X, valid_y, test_X, test_y, init=init, opt=AdamOptimizer(),
+                     experiments_n=10, verbose=verbose))

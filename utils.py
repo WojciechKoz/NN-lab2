@@ -3,10 +3,10 @@ from keras.datasets import mnist
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from time import time
+from initializers import StandardInitializer
+from optimizers import StandardOptimizer
 
 RANDOM_SEED = 0
-EXPERIMENTS_N = 7
-
 
 def flatten(X):
     return X.reshape(X.shape[0], X.shape[1] * X.shape[2])
@@ -39,27 +39,36 @@ def plot_accuracy_and_loss(accuracy, losses):
     plt.show()
 
 
-def test_model(train_X, train_y, valid_X, valid_y, test_X, test_y,
-               eta=0.05, eta_decay=1, batch_size=100, neurons=(784, 100, 30, 10),
-               activations=('relu', 'relu'), w_mean=0, w_sigma=0.1, verbose=False):
+def test_model(train_X, train_y, valid_X, valid_y, test_X, test_y, opt=StandardOptimizer(),
+               eta=0.05, batch_size=100, neurons=(784, 100, 30, 10),
+               activations=('sigmoid', 'sigmoid'), init=StandardInitializer(), experiments_n=10, verbose=False):
     from mlp import MLP
     epochs_sum = 0
     accuracy_sum = 0
     time_sum = 0
+    accuracies = [[] for _ in range(25)]
 
-    for _ in range(EXPERIMENTS_N):
-        model = MLP(eta=eta, batch_size=batch_size, neurons=neurons, eta_decay=eta_decay,
-                    activations=activations, weights_mean=w_mean, weights_sigma=w_sigma,
-                    bias_mean=w_mean, bias_sigma=w_sigma,
-                    early_stopping_max_update_interval=200,verbose=verbose)
+    for _ in range(experiments_n):
+        model = MLP(batch_size=batch_size, neurons=neurons, optimizer=opt,
+                    activations=activations, initializer=init, verbose=verbose)
 
         start = time()
         accuracy, losses = model.fit(train_X.copy(), train_y.copy(), valid_X.copy(), valid_y.copy())
         time_sum += time() - start
+
+        for i in range(min(len(accuracies), len(accuracy))):
+            accuracies[i].append(accuracy[i])
 
         if verbose:
             plot_accuracy_and_loss(accuracy, losses)
         epochs_sum += len(accuracy)
         accuracy_sum += model.accuracy(test_y, model.predict(test_X))
 
-    return accuracy_sum / EXPERIMENTS_N, epochs_sum / EXPERIMENTS_N, time_sum / EXPERIMENTS_N
+    for i in range(len(accuracies)):
+        if accuracies[i]:
+            accuracies[i] = sum(accuracies[i])/len(accuracies[i])
+        else:
+            accuracies[i] = None
+    accuracies = list(filter(lambda x: x is not None, accuracies))
+
+    return accuracy_sum / experiments_n, epochs_sum / experiments_n, time_sum / experiments_n, accuracies
